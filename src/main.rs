@@ -1,4 +1,9 @@
-use std::{collections::HashSet, fmt::Display};
+use std::{
+    cmp::PartialEq,
+    collections::HashSet,
+    fmt::{self, Display, Formatter},
+    hash::{Hash, Hasher},
+};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Hash)]
 enum Thread {
@@ -18,7 +23,7 @@ impl Thread {
 }
 
 impl Display for Thread {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::M(x) => {
                 f.write_str(x)?;
@@ -41,8 +46,8 @@ impl Adapter {
     }
 }
 
-impl std::hash::Hash for Adapter {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+impl Hash for Adapter {
+    fn hash<H: Hasher>(&self, state: &mut H) {
         // To allow it to be reversed freely without changing its hash value:
         if self.0 < self.1 {
             self.0.hash(state);
@@ -54,7 +59,7 @@ impl std::hash::Hash for Adapter {
     }
 }
 
-impl std::cmp::PartialEq for Adapter {
+impl PartialEq for Adapter {
     fn eq(&self, other: &Self) -> bool {
         // Matches the same adapter reversed:
         (self.0 == other.0 && self.1 == other.1)
@@ -63,7 +68,7 @@ impl std::cmp::PartialEq for Adapter {
 }
 
 impl Display for Adapter {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if !self.2.is_empty() {
             f.write_str(self.2)?;
             if self.0 != NIL_THREAD && self.1 != NIL_THREAD {
@@ -110,7 +115,7 @@ impl Chain {
 }
 
 impl Display for Chain {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         for a in &self.0 {
             write!(f, "[{}] ", a)?;
         }
