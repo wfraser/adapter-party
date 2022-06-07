@@ -218,7 +218,7 @@ fn main() {
     let mut equipment = vec![
         // Mount adapters:
         Adapter::new(M("EF"), F("58")),
-        Adapter::new(M("EF"), F("M39")),
+        Adapter::new(M("EF"), F("LTM")),
         Adapter::new(M("EF"), F("M42")),
         Adapter::new(M("EF"), F("FD")),
 
@@ -241,8 +241,8 @@ fn main() {
         Adapter::new(M("58"), F("52")),
 
         // Lenses:
-        Adapter::new(M("M39"), F("40.5")).with_name("Rodenstock Rodagon 50mm f/2.8"),
-        Adapter::new(M("M39"), F("42")).with_name("Schneider Componon-S 80mm f/4"),
+        Adapter::new(M("LTM"), F("40.5")).with_name("Rodenstock Rodagon 50mm f/2.8"),
+        Adapter::new(M("LTM"), F("42")).with_name("Schneider Componon-S 80mm f/4"),
     ];
 
     // EF camera body -> [?? some shit ??] -> 52mm male thread on a slide copier.
@@ -261,7 +261,7 @@ fn main() {
     equipment.push(Adapter::new(M("52"), F("58")).with_name("new 52-58"));
     let chains = make_chain(
         F("EF"),
-        F("M39"),
+        F("LTM"),
         &equipment,
     );
     for chain in chains {
