@@ -174,6 +174,43 @@ fn make_chain(start: Thread, end: Thread, equipment: &[Adapter]) -> Vec<Chain> {
     found
 }
 
+/// For all possible adapters (using threads present on existing equipment), how many new chains do
+/// they make possible if they are added?
+fn find_useful_additions(equipment: &[Adapter]) -> Vec<(Adapter, usize)> {
+    let all_threads = equipment.iter()
+        .map(|adapter| adapter.0)
+        .chain(equipment.iter().map(|adapter| adapter.1))
+        .map(|thread| thread.opposite())
+        .collect::<HashSet<Thread>>();
+    
+    let all_adapters = all_threads.iter()
+        .flat_map(|a| {
+            all_threads.iter()
+                .map(|b| Adapter::new(*a, *b))
+        })
+        .collect::<HashSet<Adapter>>();
+
+    fn count_chains(pairs: impl Iterator<Item=(Thread, Thread)>, equipment: &[Adapter]) -> usize {
+        pairs.map(|(a, b)| make_chain(a, b, equipment).len())
+            .map(|count| if count == 0 { 0 } else { 1 })
+            .sum()
+    }
+
+    let start = count_chains(all_adapters.iter().map(|a| (a.0, a.1)), equipment);
+
+    let mut results = vec![];
+    let mut new_equip = equipment.to_vec();
+    for new in &all_adapters {
+        new_equip.push(new.clone());
+        let count = count_chains(all_adapters.iter().map(|a| (a.0, a.1)), &new_equip);
+        results.push((new.clone(), count - start));
+        new_equip.pop();
+    }
+
+    results.sort_by_key(|(_a, n)| *n);
+    results
+}
+
 fn main() {
     use Thread::*;
 
@@ -229,5 +266,10 @@ fn main() {
     );
     for chain in chains {
         println!("{}", chain);
+    }
+
+    println!("---");
+    for (adapter, count) in find_useful_additions(&equipment) {
+        println!("{}: {} new chains", adapter, count);
     }
 }
