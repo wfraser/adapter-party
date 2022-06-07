@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     cmp::PartialEq,
     collections::HashSet,
     fmt::{self, Display, Formatter},
@@ -37,12 +38,27 @@ impl Display for Thread {
     }
 }
 
-#[derive(Debug, Clone, Copy, Eq)]
-struct Adapter(Thread, Thread, &'static str);
+#[derive(Debug, Clone, Eq)]
+struct Adapter(Thread, Thread, Cow<'static, str>);
 
 impl Adapter {
+    pub fn new(a: Thread, b: Thread) -> Self {
+        Self(a, b, Cow::Borrowed(""))
+    }
+
+    pub fn with_name(self, name: &'static str) -> Self {
+        Self(self.0, self.1, Cow::Borrowed(name))
+    }
+
     pub fn reverse(self) -> Self {
-        Self(self.1, self.0, self.2)
+        let name = if self.2.is_empty() {
+            self.2
+        } else if let Some(s) = self.2.strip_suffix(" (reversed)") {
+            Cow::Owned(s.to_owned())
+        } else {
+            Cow::Owned(format!("{} (reversed)", self.2))
+        };
+        Self(self.1, self.0, name)
     }
 }
 
@@ -70,7 +86,7 @@ impl PartialEq for Adapter {
 impl Display for Adapter {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         if !self.2.is_empty() {
-            f.write_str(self.2)?;
+            f.write_str(&self.2)?;
             if self.0 != NIL_THREAD && self.1 != NIL_THREAD {
                 return Ok(());
             } else {
@@ -132,7 +148,7 @@ fn make_chain(start: Thread, end: Thread, equipment: &[Adapter]) -> Vec<Chain> {
 
     let mut states = vec![State {
         used: HashSet::new(),
-        chain: Chain::new(Adapter(NIL_THREAD, start, "start")),
+        chain: Chain::new(Adapter::new(NIL_THREAD, start).with_name("start")),
     }];
 
     let mut found = vec![];
@@ -142,13 +158,13 @@ fn make_chain(start: Thread, end: Thread, equipment: &[Adapter]) -> Vec<Chain> {
             if state.used.contains(a) {
                 continue;
             }
-            if let Some(mut chain) = state.chain.add(*a) {
+            if let Some(mut chain) = state.chain.add(a.clone()) {
                 if chain.0.last().unwrap().1.opposite() == end {
-                    chain.0.push(Adapter(end, NIL_THREAD, "end"));
+                    chain.0.push(Adapter::new(end, NIL_THREAD).with_name("end"));
                     found.push(chain);
                 } else {
                     let mut used = state.used.clone();
-                    used.insert(*a);
+                    used.insert(a.clone());
                     states.push(State { used, chain });
                 }
             }
@@ -162,34 +178,34 @@ fn main() {
     use Thread::*;
 
     // All the random crap I own:
-    let equipment = vec![
+    let mut equipment = vec![
         // Mount adapters:
-        Adapter(M("EF"), F("58"), ""),
-        Adapter(M("EF"), F("M39"), ""),
-        Adapter(M("EF"), F("M42"), ""),
-        Adapter(M("EF"), F("FD"), ""),
+        Adapter::new(M("EF"), F("58")),
+        Adapter::new(M("EF"), F("M39")),
+        Adapter::new(M("EF"), F("M42")),
+        Adapter::new(M("EF"), F("FD")),
 
         // Gender / thread changers:
-        Adapter(M("58"), M("58"), ""),
-        Adapter(M("Bay1"), F("46mm"), ""),
+        Adapter::new(M("58"), M("58")),
+        Adapter::new(M("Bay1"), F("46mm")),
 
         // Step-up rings:
-        Adapter(M("40.5"), F("46"), ""),
-        Adapter(M("46"), F("52"), ""),
-        Adapter(M("46"), F("77"), ""),
-        Adapter(M("52"), F("77"), ""),
-        Adapter(M("55"), F("77"), ""),
-        Adapter(M("58"), F("77"), ""),
-        Adapter(M("62"), F("77"), ""),
-        Adapter(M("72"), F("77"), ""),
+        Adapter::new(M("40.5"), F("46")),
+        Adapter::new(M("46"), F("52")),
+        Adapter::new(M("46"), F("77")),
+        Adapter::new(M("52"), F("77")),
+        Adapter::new(M("55"), F("77")),
+        Adapter::new(M("58"), F("77")),
+        Adapter::new(M("62"), F("77")),
+        Adapter::new(M("72"), F("77")),
 
         // Step-down rings:
-        Adapter(M("72"), F("52"), ""),
-        Adapter(M("58"), F("52"), ""),
+        Adapter::new(M("72"), F("52")),
+        Adapter::new(M("58"), F("52")),
 
         // Lenses:
-        Adapter(M("M39"), F("40.5"), "Rodenstock Rodagon 50mm f/2.8"),
-        Adapter(M("M39"), F("42"), "Schneider Componon-S 80mm f/4"),
+        Adapter::new(M("M39"), F("40.5")).with_name("Rodenstock Rodagon 50mm f/2.8"),
+        Adapter::new(M("M39"), F("42")).with_name("Schneider Componon-S 80mm f/4"),
     ];
 
     // EF camera body -> [?? some shit ??] -> 52mm male thread on a slide copier.
@@ -197,6 +213,18 @@ fn main() {
     let chains = make_chain(
         F("EF"),
         M("52"),
+        &equipment,
+    );
+    for chain in chains {
+        println!("{}", chain);
+    }
+
+    println!("---");
+    // If I add this new piece, can I get one of the enlarger lenses on backwards?
+    equipment.push(Adapter::new(M("52"), F("58")).with_name("new 52-58"));
+    let chains = make_chain(
+        F("EF"),
+        F("M39"),
         &equipment,
     );
     for chain in chains {
