@@ -242,7 +242,7 @@ fn main() {
 
         // Lenses:
         Adapter::new(M("LTM"), F("40.5")).with_name("Rodenstock Rodagon 50mm f/2.8"),
-        Adapter::new(M("LTM"), F("42")).with_name("Schneider Componon-S 80mm f/4"),
+        Adapter::new(M("LTM"), F("43")).with_name("Schneider Componon-S 80mm f/4"),
     ];
 
     // EF camera body -> [?? some shit ??] -> 52mm male thread on a slide copier.
@@ -258,7 +258,7 @@ fn main() {
 
     println!("---");
     // If I add this new piece, can I get one of the enlarger lenses on backwards?
-    equipment.push(Adapter::new(M("52"), F("58")).with_name("new 52-58"));
+    equipment.push(Adapter::new(M("43"), F("58")).with_name("new 43-58"));
     let chains = make_chain(
         F("EF"),
         F("LTM"),
@@ -269,6 +269,7 @@ fn main() {
     }
 
     println!("---");
+    equipment.pop(); // remove fake piece added earlier
     for (adapter, count) in find_useful_additions(&equipment) {
         println!("{}: {} new chains", adapter, count);
     }
